@@ -109,6 +109,13 @@ mc_offsets={
   }
 }
 
+timing_register_names=[
+  'MC_SEQ_RAS_TIMING', 'MC_SEQ_CAS_TIMING',
+  'MC_SEQ_MISC_TIMING', 'MC_SEQ_MISC_TIMING2',
+  'MC_SEQ_PMG_TIMING',
+  'MC_ARB_DRAM_TIMING', 'MC_ARB_DRAM_TIMING2'
+]
+
 def format_register_string(bios_type, timing, register_name=None):
   if bios_type not in ['RX', 'R9']:
     sys.exit('Wrong bios type')
@@ -117,8 +124,7 @@ def format_register_string(bios_type, timing, register_name=None):
     return ','.join([format_register_string(bios_type, timing, r) for r in register_name])
 
   if register_name is None:
-    register_name=['MC_SEQ_RAS_TIMING', 'MC_SEQ_CAS_TIMING', 'MC_SEQ_MISC_TIMING', 'MC_SEQ_MISC_TIMING2', 'MC_SEQ_PMG_TIMING', 'MC_ARB_DRAM_TIMING', 'MC_ARB_DRAM_TIMING2']
-    return format_register_string(bios_type, timing, register_name)
+    return format_register_string(bios_type, timing, timing_register_names)
 
   if register_name not in mc_offsets[bios_type].keys():
     sys.exit('Wrong register')
@@ -127,40 +133,12 @@ def format_register_string(bios_type, timing, register_name=None):
   timing_raw=bytearray(timing.decode("hex"))
   r_raw=timing_raw[offset:offset+4][::-1]
 
-  if register_name=='MC_SEQ_RAS_TIMING':
-    r=MC_SEQ_RAS_TIMING.parse(r_raw)
-    attrs=['TRCDW', 'TRCDWA', 'TRCDR', 'TRCDRA', 'TRRD', 'TRC', 'unused1']
-    r_string=(','.join([a+'=%03d' for a in attrs])) % tuple ([getattr(r,a) for a in attrs])
-  elif register_name=='MC_SEQ_CAS_TIMING':
-    r=MC_SEQ_CAS_TIMING.parse(r_raw)
-    attrs=['TNOPW', 'TNOPR', 'TR2W', 'TCCDL', 'TR2R', 'TW2R', 'unused1', 'TCL', 'unused2']
-    r_string=(','.join([a+'=%03d' for a in attrs])) % tuple ([getattr(r,a) for a in attrs])
-  elif register_name=='MC_SEQ_MISC_TIMING':
-    if bios_type=='RX':
-      r=MC_SEQ_MISC_TIMING_RX.parse(r_raw)
-      attrs=['TRP_WRA', 'TRP_RDA', 'unused1', 'TRP', 'unused2', 'TRFC', 'unused3']
-      r_string=(','.join([a+'=%03d' for a in attrs])) % tuple ([getattr(r,a) for a in attrs])
-    elif bios_type=='R9':
-      r=MC_SEQ_MISC_TIMING_R9.parse(r_raw)
-      attrs=['TRP_WRA', 'unused1', 'TRP_RDA', 'unused2', 'TRP', 'TRFC', 'unused3']
-      r_string=(','.join([a+'=%03d' for a in attrs])) % tuple ([getattr(r,a) for a in attrs])
-    else:
-      sys.exit('Wrong bios type')
-  elif register_name=='MC_SEQ_MISC_TIMING2':
-    r=MC_SEQ_MISC_TIMING2.parse(r_raw)
-    attrs=['PA2RDATA', 'unused1', 'PA2WDATA', 'unused2', 'FAW', 'TREDC', 'TWEDC', 'T32AW', 'unused3', 'TWDATATR']
-    r_string=(','.join([a+'=%03d' for a in attrs])) % tuple ([getattr(r,a) for a in attrs])
-  elif register_name=='MC_SEQ_PMG_TIMING':
-    r=MC_SEQ_PMG_TIMING.parse(r_raw)
-    attrs=['TCKSRE', 'unused1', 'TCKSRX', 'unused2', 'TCKE_PULSE', 'TCKE', 'SEQ_IDLE', 'unused3', 'TCKE_PULSE_MSB', 'SEQ_IDLE_SS']
-    r_string=(','.join([a+'=%03d' for a in attrs])) % tuple ([getattr(r,a) for a in attrs])
-  elif register_name=='MC_ARB_DRAM_TIMING':
-    r=MC_ARB_DRAM_TIMING.parse(r_raw)
-    attrs=['ACTRD', 'ACTWR', 'RASMACTRD', 'RASMACTWR']
-    r_string=(','.join([a+'=%03d' for a in attrs])) % tuple ([getattr(r,a) for a in attrs])
-  elif register_name=='MC_ARB_DRAM_TIMING2':
-    r=MC_ARB_DRAM_TIMING2.parse(r_raw)
-    attrs=['RAS2RAS', 'RP', 'WRPLUSRP', 'BUS_TURN']
+  if register_name in timing_register_names:
+    var_name=register_name
+    if register_name=='MC_SEQ_MISC_TIMING':
+      var_name+='_'+bios_type
+    r=globals()[var_name].parse(r_raw)
+    attrs=list(reversed(r.keys()))
     r_string=(','.join([a+'=%03d' for a in attrs])) % tuple ([getattr(r,a) for a in attrs])
   else:
     sys.exit('Wrong register, should not happen')
@@ -173,30 +151,20 @@ def set_register_in_string(bios_type, register_subname, register_value, eqop, ti
 
   timing_raw=bytearray(timing.decode("hex"))
 
-  if register_subname in MC_SEQ_RAS_TIMING.parse('0000').keys():
-    offset=mc_offsets[bios_type]['MC_SEQ_RAS_TIMING']
-    cnst=MC_SEQ_RAS_TIMING
-  elif register_subname in MC_SEQ_CAS_TIMING.parse('0000').keys():
-    offset=mc_offsets[bios_type]['MC_SEQ_CAS_TIMING']
-    cnst=MC_SEQ_CAS_TIMING
-  elif bios_type=='RX' and register_subname in MC_SEQ_MISC_TIMING_RX.parse('0000').keys():
-    offset=mc_offsets[bios_type]['MC_SEQ_MISC_TIMING']
-    cnst=MC_SEQ_MISC_TIMING_RX
-  elif bios_type=='R9' and register_subname in MC_SEQ_MISC_TIMING_R9.parse('0000').keys():
-    offset=mc_offsets[bios_type]['MC_SEQ_MISC_TIMING']
-    cnst=MC_SEQ_MISC_TIMING_R9
-  elif register_subname in MC_SEQ_MISC_TIMING2.parse('0000').keys():
-    offset=mc_offsets[bios_type]['MC_SEQ_MISC_TIMING2']
-    cnst=MC_SEQ_MISC_TIMING2
-  elif register_subname in MC_SEQ_PMG_TIMING.parse('0000').keys():
-    offset=mc_offsets[bios_type]['MC_SEQ_PMG_TIMING']
-    cnst=MC_SEQ_PMG_TIMING
-  elif register_subname in MC_ARB_DRAM_TIMING.parse('0000').keys():
-    offset=mc_offsets[bios_type]['MC_ARB_DRAM_TIMING']
-    cnst=MC_ARB_DRAM_TIMING
-  elif register_subname in MC_ARB_DRAM_TIMING2.parse('0000').keys():
-    offset=mc_offsets[bios_type]['MC_ARB_DRAM_TIMING2']
-    cnst=MC_ARB_DRAM_TIMING2
+  found=False
+  for r_name in timing_register_names:
+    var_name=r_name
+    if r_name=='MC_SEQ_MISC_TIMING':
+      var_name+='_'+bios_type
+    cnst=globals()[var_name]
+    offset=mc_offsets[bios_type][r_name]
+    attrs=cnst.parse('0000').keys()
+    if register_subname in attrs:
+      found=True
+      break
+
+  if not found:
+    sys.exit("Unknown subregister")
 
   r_raw=timing_raw[offset:offset+4][::-1]
   r=cnst.parse(r_raw)
