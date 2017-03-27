@@ -6,6 +6,38 @@ from construct import *
 def hexify(a):
   return  "".join("%02x" % int(b) for b in a)
 
+#register structures borrowed from gmc_8_1_sh_mask.h
+
+MC_SEQ_WR_CTL_Dx=BitStruct("MC_SEQ_WR_CTL_Dx", #last field is lowest bits
+  BitField("unused2", 1),    #Unused
+  BitField("CMD_DLY", 1),
+  BitField("ADR_DLY", 1),
+  BitField("ODT_EXT", 1),
+  BitField("ODT_DLY", 4),
+  BitField("unused1", 2),    #Unused
+  BitField("OEN_SEL", 2),
+  BitField("OEN_EXT", 4),
+  BitField("OEN_DLY", 4),
+  BitField("CMD_2Y_DLY", 1),
+  BitField("ADR_2Y_DLY", 1),
+  BitField("DAT_2Y_DLY", 1),
+  BitField("DQS_XTR", 1),
+  BitField("DQS_DLY", 4),
+  BitField("DAT_DLY", 4),
+)
+
+#some bioses with GDDR3 memory have non zero values consistant with this structure
+MC_SEQ_WR_CTL_2=BitStruct("MC_SEQ_WR_CTL_2", #last field is lowest bits
+  BitField("unused2", 25),     #Unused
+  BitField("WCDR_EN", 1),
+  BitField("OEN_DLY_H_D1", 1),
+  BitField("DQS_DLY_H_D1", 1),
+  BitField("DAT_DLY_H_D1", 1),
+  BitField("OEN_DLY_H_D0", 1),
+  BitField("DQS_DLY_H_D0", 1),
+  BitField("DAT_DLY_H_D0", 1),
+)
+
 MC_SEQ_RAS_TIMING=BitStruct("MC_SEQ_RAS_TIMING", #last field is lowest bits
   BitField("unused1", 1), #Unused
   BitField("TRC", 7),     #Number of cycles from active to active/auto refresh -1
@@ -90,6 +122,8 @@ MC_ARB_DRAM_TIMING2=BitStruct("MC_ARB_DRAM_TIMING2", #last field is lowest bits
 
 mc_offsets={
   'RX': {
+    'MC_SEQ_WR_CTL_Dx': 0x00,
+    'MC_SEQ_WR_CTL_2':  0x04,
     'MC_SEQ_PMG_TIMING': 0x08,
     'MC_SEQ_RAS_TIMING': 0x0c,
     'MC_SEQ_CAS_TIMING': 0x10,
@@ -99,6 +133,8 @@ mc_offsets={
     'MC_ARB_DRAM_TIMING2': 0x2c
   },
   'R9': {
+    'MC_SEQ_WR_CTL_Dx': 0x00,
+    'MC_SEQ_WR_CTL_2':  0x04,
     'MC_SEQ_RAS_TIMING': 0x08,
     'MC_SEQ_CAS_TIMING': 0x0c,
     'MC_SEQ_MISC_TIMING': 0x10,
