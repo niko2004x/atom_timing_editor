@@ -41,8 +41,9 @@ ATOM_COMMON_TABLE_HEADER=Struct("ATOM_COMMON_TABLE_HEADER",
   ULInt8("ucTableContentRevision")
 )
 
+#FIXME this is different from atombios.h version and probably wrong after ucReserved
 ATOM_ROM_HEADER=Struct("ATOM_ROM_HEADER",
-  ATOM_COMMON_TABLE_HEADER,
+  Rename("sHeader", ATOM_COMMON_TABLE_HEADER),
   ULInt32("uaFirmWareSignature"),
   ULInt16("usBiosRuntimeSegmentAddress"),
   ULInt16("usProtectedModeInfoOffset"),
@@ -64,42 +65,42 @@ ATOM_ROM_HEADER=Struct("ATOM_ROM_HEADER",
   ULInt16("usDeviceID")
 )
 
-ATOM_DATA_TABLE=Struct("ATOM_DATA_TABLE",
-  ATOM_COMMON_TABLE_HEADER,
-  ULInt16("UtilityPipeLine"),
-  ULInt16("MultimediaCapabilityInfo"),
-  ULInt16("MultimediaConfigInfo"),
-  ULInt16("StandardVESA_Timing"),
-  ULInt16("FirmwareInfo"),
-  ULInt16("PaletteData"),
-  ULInt16("LCD_Info"),
-  ULInt16("DIGTransmitterInfo"),
-  ULInt16("SMU_Info"),
-  ULInt16("SupportedDevicesInfo"),
-  ULInt16("GPIO_I2C_Info"),
-  ULInt16("VRAM_UsageByFirmware"),
-  ULInt16("GPIO_Pin_LUT"),
-  ULInt16("VESA_ToInternalModeLUT"),
-  ULInt16("GFX_Info"),
-  ULInt16("PowerPlayInfo"),
-  ULInt16("GPUVirtualizationInfo"),
-  ULInt16("SaveRestoreInfo"),
-  ULInt16("PPLL_SS_Info"),
-  ULInt16("OemInfo"),
-  ULInt16("XTMDS_Info"),
-  ULInt16("MclkSS_Info"),
-  ULInt16("Object_Header"),
-  ULInt16("IndirectIOAccess"),
-  ULInt16("MC_InitParameter"),
-  ULInt16("ASIC_VDDC_Info"),
-  ULInt16("ASIC_InternalSS_Info"),
-  ULInt16("TV_VideoMode"),
-  ULInt16("VRAM_Info"),
-  ULInt16("MemoryTrainingInfo"),
-  ULInt16("IntegratedSystemInfo"),
-  ULInt16("ASIC_ProfilingInfo"),
-  ULInt16("VoltageObjectInfo"),
-  ULInt16("PowerSourceInfo"),
+ATOM_MASTER_DATA_TABLE=Struct("ATOM_MASTER_DATA_TABLE",
+  Rename("sHeader", ATOM_COMMON_TABLE_HEADER),
+  ULInt16("UtilityPipeLine"),          # Offest for the utility to get parser info,Don't change this position!
+  ULInt16("MultimediaCapabilityInfo"), # Only used by MM Lib,latest version 1.1, not configuable from Bios, need to include the table to build Bios
+  ULInt16("MultimediaConfigInfo"),     # Only used by MM Lib,latest version 2.1, not configuable from Bios, need to include the table to build Bios
+  ULInt16("StandardVESA_Timing"),      # Only used by Bios
+  ULInt16("FirmwareInfo"),             # Shared by various SW components,latest version 1.4
+  ULInt16("PaletteData"),              # Only used by BIOS
+  ULInt16("LCD_Info"),                 # Shared by various SW components,latest version 1.3, was called LVDS_Info
+  ULInt16("DIGTransmitterInfo"),       # Internal used by VBIOS only version 3.1
+  ULInt16("SMU_Info"),                 # Shared by various SW components,latest version 1.1
+  ULInt16("SupportedDevicesInfo"),     # Will be obsolete from R600
+  ULInt16("GPIO_I2C_Info"),            # Shared by various SW components,latest version 1.2 will be used from R600
+  ULInt16("VRAM_UsageByFirmware"),     # Shared by various SW components,latest version 1.3 will be used from R600
+  ULInt16("GPIO_Pin_LUT"),             # Shared by various SW components,latest version 1.1
+  ULInt16("VESA_ToInternalModeLUT"),   # Only used by Bios
+  ULInt16("GFX_Info"),                 # Shared by various SW components,latest version 2.1 will be used from R600
+  ULInt16("PowerPlayInfo"),            # Shared by various SW components,latest version 2.1,new design from R600
+  ULInt16("GPUVirtualizationInfo"),    # Will be obsolete from R600
+  ULInt16("SaveRestoreInfo"),          # Only used by Bios
+  ULInt16("PPLL_SS_Info"),             # Shared by various SW components,latest version 1.2, used to call SS_Info, change to new name because of int ASIC SS info
+  ULInt16("OemInfo"),                  # Defined and used by external SW, should be obsolete soon
+  ULInt16("XTMDS_Info"),               # Will be obsolete from R600
+  ULInt16("MclkSS_Info"),              # Shared by various SW components,latest version 1.1, only enabled when ext SS chip is used
+  ULInt16("Object_Header"),            # Shared by various SW components,latest version 1.1
+  ULInt16("IndirectIOAccess"),         # Only used by Bios,this table position can't change at all!!
+  ULInt16("MC_InitParameter"),         # Only used by command table
+  ULInt16("ASIC_VDDC_Info"),           # Will be obsolete from R600
+  ULInt16("ASIC_InternalSS_Info"),     # New tabel name from R600, used to be called "ASIC_MVDDC_Info"
+  ULInt16("TV_VideoMode"),             # Only used by command table
+  ULInt16("VRAM_Info"),                # Only used by command table, latest version 1.3
+  ULInt16("MemoryTrainingInfo"),       # Used for VBIOS and Diag utility for memory training purpose since R600. the new table rev start from 2.1
+  ULInt16("IntegratedSystemInfo"),     # Shared by various SW components
+  ULInt16("ASIC_ProfilingInfo"),       # New table name from R600, used to be called "ASIC_VDDCI_Info" for pre-R600
+  ULInt16("VoltageObjectInfo"),        # Shared by various SW components, latest version 1.1
+  ULInt16("PowerSourceInfo"),          # Shared by various SW components, latest versoin 1.1
   ULInt16("ServiceInfo"),
 )
 
@@ -133,7 +134,7 @@ ATOM_VRAM_ENTRY=Struct("ATOM_VRAM_ENTRY",
 )
 
 ATOM_VRAM_INFO_TABLE=Struct("ATOM_VRAM_INFO_TABLE",
-  ATOM_COMMON_TABLE_HEADER,
+  Rename("sHeader", ATOM_COMMON_TABLE_HEADER),
   ULInt16("usMemAdjustTblOffset"),
   ULInt16("usMemClkPatchTblOffset"),
   ULInt16("usMcAdjustPerTileTblOffset"),

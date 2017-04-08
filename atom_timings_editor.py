@@ -2,7 +2,7 @@ import optparse
 import sys
 import re
 from construct import *
-from atom_rom import atom_rom_header_ptr, ATOM_ROM_HEADER, fix_bios_checksum, ATOM_VRAM_TIMING_ENTRY, ATOM_DATA_TABLE, ATOM_VRAM_INFO_TABLE, get_bios_version
+from atom_rom import atom_rom_header_ptr, ATOM_ROM_HEADER, fix_bios_checksum, ATOM_VRAM_TIMING_ENTRY, ATOM_MASTER_DATA_TABLE, ATOM_VRAM_INFO_TABLE, get_bios_version
 from atom_rom_timings import format_register_string, set_register_in_string
 
 def hexify(a):
@@ -77,27 +77,26 @@ def detect_timing_table_offset(bios, offset, verbose=False):
     print "atom_rom_header_offset is", atom_rom_header_offset
     print "atom_rom_header is", atom_rom_header
 
-  atom_data_table_offset=atom_rom_header.usMasterDataTableOffset
-  atom_data_table = ATOM_DATA_TABLE.parse(bios[atom_data_table_offset:])
+  atom_master_data_table_offset=atom_rom_header.usMasterDataTableOffset
+  atom_master_data_table = ATOM_MASTER_DATA_TABLE.parse(bios[atom_master_data_table_offset:])
 
   if verbose:
-    print "atom_data_table_offset is", atom_data_table_offset
-    print "atom_data_table is", atom_data_table
+    print "atom_master_data_table_offset is", atom_master_data_table_offset
+    print "atom_master_data_table is", atom_master_data_table
 
-  atom_vram_info_table_offset=atom_data_table.VRAM_Info
+  atom_vram_info_table_offset=atom_master_data_table.VRAM_Info
   atom_vram_info_table = ATOM_VRAM_INFO_TABLE.parse(bios[atom_vram_info_table_offset:])
 
   if verbose:
     print "atom_vram_info_table_offset is", atom_vram_info_table_offset
     print "atom_vram_info_table is", atom_vram_info_table
 
-  atom_vram_info_table_header=atom_vram_info_table.ATOM_COMMON_TABLE_HEADER
-  atom_vram_info_table_revision=(atom_vram_info_table_header.ucTableFormatRevision, atom_vram_info_table_header.ucTableContentRevision)
-
+  #atom_vram_info_table_header=atom_vram_info_table.sHeader
+  #atom_vram_info_table_revision=(atom_vram_info_table_header.ucTableFormatRevision, atom_vram_info_table_header.ucTableContentRevision)
   #if atom_vram_info_table_revision not in [(2,1), (2,2), (1,4)]:
   #  sys.exit("Unknown not vram info revision")
 
-  atom_vram_timing_table_offset=atom_data_table.VRAM_Info+atom_vram_info_table.usMemClkPatchTblOffset+0x2c+offset #entries starts 2 bytes later
+  atom_vram_timing_table_offset=atom_master_data_table.VRAM_Info+atom_vram_info_table.usMemClkPatchTblOffset+0x2c+offset #entries starts 2 bytes later
 
   return atom_vram_timing_table_offset
 
