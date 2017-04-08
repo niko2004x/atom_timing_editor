@@ -270,7 +270,7 @@ if __name__ == '__main__':
           new_parsed_timing_table[id_][2]=src_parsed_timings
           if 'change' in p_ and options.registers is not None:
             for rfix in p_['change']:
-              new_parsed_timing_table[id_][2]=set_register_in_string(timing_entry_type, rfix[0], rfix[1], rfix[2], src_parsed_timings)
+              new_parsed_timing_table[id_][2]=set_register_in_string(timing_entry_type, rfix[0], rfix[1], rfix[2], new_parsed_timing_table[id_][2])
 
   if options.verbose:
     print "New timing table"
